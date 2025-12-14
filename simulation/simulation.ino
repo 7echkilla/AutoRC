@@ -26,6 +26,7 @@
 #define MOTOR_RF_PIN 10
 #define MOTOR_RB_PIN 9
 #define MOTOR_EN_PIN 11
+#define MAX_SPEED 255.0
 
 #define SERVO_PIN 3
 #define BAUD_RATE 9600
@@ -33,7 +34,7 @@
 AnalogJoystick analog_joystick(HORZ_PIN, VERT_PIN, JOYSTICK_MIN, JOYSTICK_MAX);
 InfraredProximitySensor ir_left(IR_L_PIN, IR_THRESHOLD), ir_right(IR_R_PIN, IR_THRESHOLD);
 UltrasonicSensor ultrasonic_sensor(TRIG_PIN, ECHO_PIN);
-DCMotor motor_left(MOTOR_LF_PIN, MOTOR_LB_PIN, MOTOR_EN_PIN), motor_right(MOTOR_RF_PIN, MOTOR_RB_PIN, MOTOR_EN_PIN);
+DCMotor motor_left(MOTOR_LF_PIN, MOTOR_LB_PIN, MOTOR_EN_PIN, MAX_SPEED), motor_right(MOTOR_RF_PIN, MOTOR_RB_PIN, MOTOR_EN_PIN, MAX_SPEED);
 Servo servo;
 
 void setup() {
@@ -51,13 +52,12 @@ void setup() {
 }
 
 void loop() {
-    int x_value = analog_joystick.get_x_value();
-    int y_value = analog_joystick.get_y_value();
+    float x_value = analog_joystick.get_x_value();
+    float y_value = analog_joystick.get_y_value();
 
-    while (x_value or y_value) {
-        Serial.print("X: ");
-        Serial.print(x_value);
-        Serial.print(", Y: ");
-        Serial.println(y_value);
-    }
+    float left_value = constrain(y_value + x_value, -1.0, 1.0);
+    float right_value = constrain(y_value - x_value, -1.0, 1.0);
+
+    motor_left.drive_motor(left_value);
+    motor_right.drive_motor(right_value);
 }
