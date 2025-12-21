@@ -16,7 +16,7 @@
 // IR sensor config
 #define IR_R_PIN A2
 #define IR_L_PIN A3 
-#define IR_THRESHOLD 400    // Positive detection above this value
+#define IR_THRESHOLD 600    // Positive detection above this value [0-1023]
 
 // Ultrasonic sensor config
 #define ECHO_PIN 4
@@ -54,12 +54,13 @@ void setup() {
     Serial.begin(BAUD_RATE);
 }
 
-void automated_control() {
+void automatic_control() {
     int obstacle_distance = ultrasonic_sensor.get_distance();
     bool is_left_white = ir_left.is_white();
     bool is_right_white = ir_right.is_white();
     float drive_value = 0.5;
 
+    // Drive logic
     if (obstacle_distance < MIN_DISTANCE) {
         servo.write(SERVO_MAX / 2);
         motor_left.drive_motor(0.0);
@@ -77,6 +78,10 @@ void automated_control() {
             servo.write(SERVO_MAX);
             motor_left.drive_motor(drive_value);
             motor_right.drive_motor(-drive_value);
+        } else {
+            servo.write(SERVO_MAX / 2);
+            motor_left.drive_motor(0.0);
+            motor_right.drive_motor(0.0);
         }
     }
 }
@@ -129,10 +134,18 @@ void loop() {
         } else if (control_mode == HIGH) {
             Serial.println("[INFO] Manual mode");
         } else {
-            Serial.println("Undefined mode");
+            Serial.println("[WARN] Undefined mode");
         }
     }
 
     last_sel_value = sel_value;
+
+    // Ensure state unless toggled
+    if (control_mode == LOW) {
+        automatic_control();
+    } else if (control_mode == HIGH) {
+        manual_control();
+    }
+
     delay(100);    
 }
